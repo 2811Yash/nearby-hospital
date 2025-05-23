@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hospital Finder</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f7f9fc;
+      margin: 0;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h2 {
+      color: #333;
+    }
+
+    input {
+      padding: 10px;
+      width: 300px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-right: 10px;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #noResults {
+      margin-top: 20px;
+      color: red;
+      font-weight: bold;
+    }
+
+    table {
+      width: 90%;
+      max-width: 800px;
+      border-collapse: collapse;
+      margin-top: 30px;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    th, td {
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #f0f0f0;
+    }
+
+    #loader {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #3498db;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin-top: 20px;
+      display: none;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <h2>Find Hospitals Near You</h2>
+  <div>
+    <input type="text" id="location" placeholder="Enter location (e.g., Shivaji Nagar Pune)">
+    <button onclick="searchHospitals()">Search</button>
+  </div>
+
+  <div id="loader"></div>
+  <p id="noResults"></p>
+
+  <table id="resultsTable" style="display: none;">
+    <thead>
+      <tr>
+        <th>Hospital Name</th>
+        <th>Address</th>
+        <th>Phone</th>
+      </tr>
+    </thead>
+    <tbody id="resultsBody"></tbody>
+  </table>
+
+  <script>
+    async function searchHospitals() {
+      const location = document.getElementById('location').value.trim();
+      const loader = document.getElementById('loader');
+      const noResults = document.getElementById('noResults');
+      const table = document.getElementById('resultsTable');
+      const tbody = document.getElementById('resultsBody');
+
+      if (!location) {
+        noResults.textContent = "Please enter a location.";
+        table.style.display = "none";
+        return;
+      }
+
+      // Reset UI
+      noResults.textContent = "";
+      tbody.innerHTML = "";
+      table.style.display = "none";
+      loader.style.display = "block";
+
+      try {
+        const response = await fetch(`http://localhost:4000/hospitals?location=${encodeURIComponent(location)}`);
+        const hospitals = await response.json();
+
+        loader.style.display = "none";
+
+        if (!hospitals || hospitals.length === 0) {
+          noResults.textContent = 'No hospitals found for the entered location.';
+          return;
+        }
+
+        hospitals.forEach(hospital => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${hospital.title || 'N/A'}</td>
+            <td>${hospital.address || 'N/A'}</td>
+            <td>${hospital.phone || 'N/A'}</td>
+          `;
+          tbody.appendChild(row);
+        });
+
+        table.style.display = "table";
+      } catch (error) {
+        loader.style.display = "none";
+        noResults.textContent = "Error fetching hospital data.";
+        console.error(error);
+      }
+    }
+  </script>
+</body>
+</html>
